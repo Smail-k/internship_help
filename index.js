@@ -1,32 +1,19 @@
-const { exec } = require('child_process');
+const express = require("express");
+const app = express();
+const path =require("path")
 
-function executerScriptPerl(scriptPath) {
-  return new Promise((resolve, reject) => {
-    exec(`perl ${scriptPath}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Erreur lors de l'exécution du script Perl : ${stderr}`);
-        reject(error);
-      } else {
-        try {
-          const contenuJSON = JSON.parse(stdout);
-          // Utilisez le contenu JSON comme souhaité
-          // Par exemple, imprimez le contenu
-          console.log(contenuJSON);
-          resolve(contenuJSON);
-        } catch (e) {
-          console.error(`Erreur lors de l'analyse du contenu JSON : ${e}`);
-          reject(e);
-        }
-      }
-    });
-  });
-}
+app.listen(8080,()=>{
+  console.log("lestening in port 8080");
+}); 
+
+const data = require('./data.json');
+
+app.get('/', (req, res) => {
+  console.log(encodeURIComponent(JSON.stringify(data)))
+  res.render('index', { jsonData: encodeURIComponent(JSON.stringify(data)) });
+});
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 
-executerScriptPerl('./script.pl')
-  .then(contenuJSON => {
-    console.log(contenuJSON)
-  })
-  .catch(erreur => {
-    
-  });

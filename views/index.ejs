@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Menu déroulant</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <select id="mainSelect" onchange="showSubSelect()">
+    <option value="">select</option>
+    <% Object.keys(JSON.parse(decodeURIComponent(jsonData))).forEach((key) => { %>
+      <option value="<%= key %>"><%= key %></option>
+    <% }) %>
+  </select>
+
+  <select id="subSelect" onchange="showCurveSelect()">
+  </select>
+
+  <select id="curveSelect" onchange="showDetails()" multiple>
+  </select>
+
+  <canvas id="myChart" style="width: 50%; height: 50%;"></canvas>
+
+  <script>
+    var jsonData = JSON.parse(decodeURIComponent('<%- jsonData %>'));
+    var myChart;
+
+    function showSubSelect() {
+      var mainSelect = document.getElementById("mainSelect");
+      var subSelect = document.getElementById("subSelect");
+      subSelect.innerHTML = "";
+
+      var selectedMain = mainSelect.value;
+      var subOptions = Object.keys(jsonData[selectedMain]);
+
+      subOptions.forEach((option) => {
+        var subOption = document.createElement("option");
+        subOption.value = option;
+        subOption.text = option;
+        subSelect.appendChild(subOption);
+      });
+
+      // Réinitialiser la sélection des courbes
+      var curveSelect = document.getElementById("curveSelect");
+      curveSelect.innerHTML = "";
+    }
+
+    function showCurveSelect() {
+      var mainSelect = document.getElementById("mainSelect");
+      var subSelect = document.getElementById("subSelect");
+      var curveSelect = document.getElementById("curveSelect");
+      curveSelect.innerHTML = "";
+
+      var selectedMain = mainSelect.value;
+      var selectedSub = subSelect.value;
+      var curveOptions = Object.keys(jsonData[selectedMain][selectedSub].CURVE);
+
+      curveOptions.forEach((option) => {
+        var curveOption = document.createElement("option");
+        curveOption.value = option;
+        curveOption.text = option;
+        curveSelect.appendChild(curveOption);
+      });
+    }
+
+    function showDetails() {
+  var mainSelect = document.getElementById("mainSelect");
+  var subSelect = document.getElementById("subSelect");
+  var curveSelect = document.getElementById("curveSelect");
+
+  var selectedMain = mainSelect.value;
+  var selectedSub = subSelect.value;
+  var selectedCurves = Array.from(curveSelect.selectedOptions).map(option => option.value);
+
+  var selectedDetails = [];
+
+  if (selectedCurves.length > 0) {
+    for (var i = 0; i < selectedCurves.length; i++) {
+      var selectedCurve = selectedCurves[i];
+      var details = jsonData[selectedMain][selectedSub].CURVE[selectedCurve];
+      console.log(details+  "+++++++++++++")
+      selectedDetails.push({
+        label: selectedMain + ' - ' + selectedSub + ' - ' + selectedCurve,
+        data: formatChartData(details)
+      });
+    }
+  }
+
+  drawChart(selectedDetails);
+}
+
+
+    function formatChartData(details) {
+      var labels = [];
+      var values = [];
+
+      for (var i = 2; i < details.length; i += 2) {
+        labels.push(details[i]);
+        values.push(details[i + 1]);
+      }
+
+      return {
+        labels: labels,
+        values: values
+      };
+    }
+
+    function drawChart(chartData) {
+      var ctx = document.getElementById('myChart').getContext('2d');
+      var colors = ['rgba(0, 123, 255, 1)', 'rgba(255, 0, 123, 1)', 'rgba(123, 0, 255, 1)'];
+      if (myChart) {
+        myChart.destroy(); // Détruire le graphique existant
+      }
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartData[0].data.labels,
+          datasets: chartData.map((data, index) => ({
+            label: data.label,
+            data: data.data.values,
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length],
+            borderWidth: 1
+          }))
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Etiquette X'
+              }
+            },
+            y: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Etiquette Y'
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
